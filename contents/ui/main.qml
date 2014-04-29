@@ -29,7 +29,7 @@ Item {
 
 	//************ OPTIONS ************
 
-	property string appName: "Tomatoid"
+	property string appName: "Tomatoid Light"
 
 	property int minimumWidth: 280
 	property int minimumHeight: 320
@@ -55,9 +55,6 @@ Item {
 	property int tickingVolume: 50
 
 	//************ /OPTIONS ************
-
-	ListModel { id: completeTasks }
-	ListModel { id: incompleteTasks }
 
 	Component.onCompleted: {
 		plasmoid.addEventListener("ConfigChanged", configChanged)
@@ -90,81 +87,6 @@ Item {
 		}
 	}
 
-	PlasmaComponents.ToolBar {
-		id: toolBar
-		tools: TopBar {
-			id: topBar
-		}
-	}
-
-	PlasmaComponents.TabBar {
-		id: tabBar
-		height: 30
-
-		PlasmaComponents.TabButton { tab: incompleteTaskList; text: i18n("Tasks") }
-		PlasmaComponents.TabButton { tab: completeTaskList; text: i18n("Completed") }
-
-		anchors {
-			top: toolBar.bottom
-			left: parent.left
-			right: parent.right
-			margins: 7
-			leftMargin: 10
-			rightMargin: 10
-		}
-	}
-
-
-	PlasmaCore.FrameSvgItem {
-		id: taskFrame
-		anchors.fill: toolBarLayout
-		imagePath: "widgets/frame"
-		prefix: "sunken"
-	}
-
-
-	PlasmaComponents.TabGroup {
-		id: toolBarLayout
-
-		anchors {
-			top: tabBar.bottom
-			left: parent.left
-			right: parent.right
-			bottom: parent.bottom
-			bottomMargin: timerRunning ? 32 : 5
-			margins: 5
-
-			Behavior on bottomMargin {
-				NumberAnimation {
-					duration: 400
-					easing.type: Easing.OutQuad
-				}
-			}
-		}
-
-		TaskList {
-			id: incompleteTaskList
-
-			model: incompleteTasks
-			done: false
-
-			onDoTask: Logic.doTask(taskIdentity)
-			onRemoveTask: Logic.removeIncompleteTask(taskIdentity)
-			onStartTask: Logic.startTask(taskIdentity, taskName)
-			onRenameTask: Logic.renameTask(taskIdentity, newName)
-		}
-
-		TaskList {
-			id: completeTaskList
-
-			model: completeTasks
-			done: true
-
-			onDoTask: Logic.undoTask(taskIdentity)
-			onRemoveTask: Logic.removeCompleteTask(taskIdentity)
-		}
-	}
-
 	SoundEffect {
 		id: notificationSound
 		source: plasmoid.file("data", "notification.wav")
@@ -191,8 +113,7 @@ Item {
 				plasmoid.showPopup(5000)
 
 			if(inPomodoro) {
-				console.log(taskId)
-				Logic.completePomodoro(taskId)
+				Logic.completePomodoro()
 				Logic.startBreak()
 
 				if(kdeNotification)
@@ -202,37 +123,8 @@ Item {
 				if(kdeNotification)
 					Logic.notify(i18n("Relax time is over"), i18n("Get back to work. Choose a task and start again."));
 				if(continuousMode && completedPomodoros % pomodorosPerLongBreak) //if continuous mode and long break
-					Logic.startTask(timer.taskId, timer.taskName)
+					Logic.start()
 			}
-		}
-	}
-
-	//chronometer with action buttons and regressive progress bar in the bottom. This will get the time from TomatoidTimer
-	Chronometer {
-		id: chronometer
-		height: 22
-		seconds: timer.seconds
-		totalSeconds: timer.totalSeconds
-		opacity: timerRunning * 1 //only show if timer ir running
-
-		onPlayPressed: {
-			timer.running = true
-		}
-
-		onPausePressed: {
-			timer.running = false
-		}
-
-		onStopPressed: {
-			Logic.stop()
-		}
-
-		anchors {
-			left: tomatoid.left
-			right: tomatoid.right
-			bottom: tomatoid.bottom
-			leftMargin: 5
-			bottomMargin: 5
 		}
 	}
 }

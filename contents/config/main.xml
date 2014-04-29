@@ -6,15 +6,6 @@ xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
 		<kcfgfile name=""/>
 
 		<group name="General">
-			<entry name="incompleteTasks" type="String">
-				<label>Tasks</label>
-				<default></default>
-			</entry>
-			<entry name="completeTasks" type="String">
-				<label>Tasks</label>
-				<default></default>
-			</entry>
-
 			<entry name="pomodoroLenght" type="Int">
 				<label>The lenght in minutes of one pomodoro</label>
 				<default>25</default>

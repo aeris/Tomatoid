@@ -16,152 +16,24 @@
  *   Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-var sep = "~";
-var sep2 = "%";
 var test = false;
 
-// function newTaskDB(taskName) {
-//     var db = openDataBaseSync("tomatoid_db", "1.0")
-//     db.transaction(
-//         function(tx) {
-//             tx.executeSql('CREATE TABLE IF NOT EXISTS tasks(task_name TEXT, complete_pomo INT, estimate_pomo INT)');
-//             tx.executeSql('INSERT INTO tasks VALUES(?, ?, ?)', [ taskName, 0, 0 ]);
-//         }
-//     )
-// }
-
-function parseConfig(configName, model) {
-	var tasksSourcesString = plasmoid.readConfig(configName).toString();
-	var tasks = new Array();
-	if (tasksSourcesString.length > 0)
-		tasks = tasksSourcesString.split(sep2);
-
-	for(var i = 0; i < tasks.length; i++) {
-		var task = tasks[i].split(sep);
-		model.append({"taskId":task[0], "taskName":task[1], "donePomos":parseInt(task[2]), "estimatedPomos":parseInt(task[3])});
+function onClick() {
+	if (!inPomodoro) {
+		start();
+	} else {
+		timer.running = !timer.running;
 	}
 }
 
-function newTask(taskName, estimatedPomos) {
-	addTask(taskName, 0, estimatedPomos, incompleteTasks, "incompleteTasks");
-}
-
-function insertIncompleteTask(taskName, donePomos, estimatedPomos) {
-	addTask(taskName, donePomos, estimatedPomos, incompleteTasks, "incompleteTasks");
-}
-function insertCompleteTask(taskName, donePomos, estimatedPomos) {
-	addTask(taskName, donePomos, estimatedPomos, completeTasks, "completeTasks");
-}
-
-function removeIncompleteTask(id) {
-	return removeTask(id, incompleteTasks, "incompleteTasks");
-}
-function removeCompleteTask(id) {
-	return removeTask(id, completeTasks, "completeTasks");
-}
-
-
-function addTask(taskName, donePomos, estimatedPomos, model, configName) {
-	var id = randomString(10);
-	var tasks = "";
-
-	if(model.count > 0) {
-		for(var i = 0; i < model.count; i++) {
-			tasks += model.get(i).taskId + sep + model.get(i).taskName + sep +
-			model.get(i).donePomos + sep + model.get(i).estimatedPomos + sep2
-		}
+function onDoubleClick() {
+	if (inPomodoro) {
+		stop();
 	}
-
-	//make sure no one is going to fuck with the kcfg separation.
-	taskName = taskName.replace(new RegExp(sep,"gm"), "");
-	taskName = taskName.replace(new RegExp(sep2,"gm"), "");
-
-	tasks += id + sep + taskName + sep + donePomos + sep + estimatedPomos
-
-	console.log(tasks);
-	plasmoid.writeConfig(configName, tasks);
-	model.append({"taskId":id, "taskName":taskName, "donePomos":donePomos, "estimatedPomos":estimatedPomos});
 }
 
-function removeTask(id, model, configName) {
-	var removedTask = "";
-	var tasks = "";
-	var index = 0;
-
-	console.log(id);
-
-	for(var i = 0; i < model.count; i++) {
-		var task = model.get(i);
-		if(id != task.taskId) {
-			if(tasks != "") tasks += sep2;
-
-			tasks += task.taskId + sep + task.taskName + sep + task.donePomos + sep + task.estimatedPomos;
-		} else {
-			removedTask = task.taskName + sep + task.donePomos + sep + task.estimatedPomos;
-			index = i;
-		}
-	}
-
-	console.log(tasks);
-	console.log(removedTask);
-	plasmoid.writeConfig(configName, tasks);
-	model.remove(index);
-
-	return removedTask;
-}
-
-
-function renameTask(id, taskName) {
-	var index = 0
-	var tasks = "";
-	var model = incompleteTasks;
-
-	for(var i = 0; i < model.count; i++) {
-		var task = model.get(i);
-		if(tasks != "") tasks += sep2;
-
-		tasks += task.taskId + sep;
-
-		if(id == task.taskId) {
-			index = i;
-			tasks += taskName; //if id matches, insert changed name
-		} else {
-			tasks += task.taskName;
-		}
-
-		tasks += sep + task.donePomos + sep + task.estimatedPomos;
-	}
-
-	console.log(id + ": " + tasks);
-	plasmoid.writeConfig("incompleteTasks", tasks);
-	model.setProperty(index, "taskName", taskName);
-}
-
-
-function doTask(id) {
-	var removedTask = removeIncompleteTask(id);
-	var split = removedTask.split(sep);
-
-	console.log(split);
-
-	insertCompleteTask(split[0], split[1], split[2]);
-}
-
-
-function undoTask(id) {
-	var removedTask = removeCompleteTask(id);
-	var split = removedTask.split(sep);
-
-	console.log(split);
-
-	insertIncompleteTask(split[0], split[1], split[2]);
-}
-
-
-function startTask(id, taskName) {
+function start() {
 	console.log(plasmoid.popupIcon)
-	timer.taskId = id;
-	timer.taskName = taskName;
 	timer.totalSeconds = test ? 5 : pomodoroLenght * 60;
 	timer.running = true;
 	inPomodoro = true;
@@ -193,30 +65,8 @@ function stop() {
 }
 
 
-function completePomodoro(taskId) {
-	var tasks = "";
-	var index = 0;
-
-	for(var i = 0; i < incompleteTasks.count; i++) {
-		var task = incompleteTasks.get(i);
-		var donePomos = task.donePomos;
-
-		if(tasks != "") tasks += sep2;
-
-		if(taskId == task.taskId) {
-			donePomos += 1;
-			index = i;
-		}
-
-		tasks += task.taskId + sep +
-		task.taskName + sep + donePomos + sep + task.estimatedPomos;
-	}
-
+function completePomodoro() {
 	completedPomodoros += 1
-
-	console.log(tasks);
-	plasmoid.writeConfig("incompleteTasks", tasks);
-	incompleteTasks.setProperty(index, "donePomos", incompleteTasks.get(index).donePomos + 1)
 }
 
 

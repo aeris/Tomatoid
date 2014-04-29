@@ -33,7 +33,6 @@
 	property QtObject timer: plasmoid.rootItem.timer
 	property bool timerRunning: seconds > 0 || timer.running
 	property int seconds: timer.seconds
-	property string taskName: timer.taskName
 
 	property string timeString: Qt.formatTime(new Date(0,0,0,0,0, seconds), "mm:ss")
 
@@ -59,7 +58,8 @@
 		hoverEnabled: true
 		property int minimumWidth
 		property int minimumHeight
-		onClicked: plasmoid.togglePopup()
+		onClicked: Logic.onClick();
+		onDoubleClicked: Logic.onDoubleClick();
 
 		PlasmaCore.Theme { id: theme }
 
